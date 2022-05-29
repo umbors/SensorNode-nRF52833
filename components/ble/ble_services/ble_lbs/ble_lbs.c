@@ -103,7 +103,7 @@ uint32_t ble_lbs_init(ble_lbs_t * p_lbs, const ble_lbs_init_t * p_lbs_init)
     add_char_params.uuid              = LBS_UUID_PSENSOR_CHAR;
     add_char_params.uuid_type         = p_lbs->uuid_type;
     add_char_params.init_len          = sizeof(uint8_t);
-    add_char_params.max_len           = 17;
+    add_char_params.max_len           = 40;
     add_char_params.char_props.read   = 1;
     add_char_params.char_props.notify = 1;
 
@@ -116,7 +116,7 @@ uint32_t ble_lbs_init(ble_lbs_t * p_lbs, const ble_lbs_init_t * p_lbs_init)
 uint32_t ble_lbs_on_psensor_change(uint16_t conn_handle, ble_lbs_t * p_lbs, uint8_t dataToSend[])
 {
     ble_gatts_hvx_params_t params;
-		uint16_t len = 17;
+		uint16_t len = 40;
 
     memset(&params, 0, sizeof(params));
     params.type   = BLE_GATT_HVX_NOTIFICATION;

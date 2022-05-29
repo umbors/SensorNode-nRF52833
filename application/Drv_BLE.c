@@ -3,7 +3,7 @@
 BLE_LBS_DEF(m_lbs);                                                             /**< LED Button Service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
-uint8_t dataToSend[17];
+uint8_t dataToSend[40];
 
 void psensor_data_send(uint8_t dataToSend[]){
 		ret_code_t err_code;		
@@ -21,24 +21,25 @@ void psensor_event_handler(nrfx_saadc_evt_t const * p_event)
 		//send twice,add buffer and calculate if the power consumption is too high
     if (p_event->type == NRFX_SAADC_EVT_DONE)
     {
-			uint8_t index = 8*psensor_direction;
+			uint8_t index = 10*psensor_col + 2*psensor_row;
       for(int i = 0; i < p_event->data.done.size; i++)
       {
-				NRF_LOG_INFO("CH%d: %d", i, p_event->data.done.p_buffer[i]);
-				dataToSend[2*i + index] = (uint8_t)(p_event->data.done.p_buffer[i]>>8);
-				dataToSend[2*i + 1 + index] = (uint8_t)p_event->data.done.p_buffer[i];
+				//NRF_LOG_INFO("CH%d: %d", i, p_event->data.done.p_buffer[i]);
+				dataToSend[i + index] = (uint8_t)(p_event->data.done.p_buffer[i]>>8);
+				dataToSend[i + index + 1] = (uint8_t)p_event->data.done.p_buffer[i];
       }
-			dataToSend[16] = psensor_pointer;
-			if(psensor_direction == 1){
+			//send data when scan is done
+			if(psensor_col == 3 && psensor_row == 4){
 				psensor_data_send(dataToSend);
-				if(psensor_pointer == 4){
-					psensor_pointer = 1;
-				}
-				else psensor_pointer += 1;
-				psensor_direction = 0;
+				psensor_col = 0;
+				psensor_row = 0;
+			}
+			else if(psensor_row == 4){
+				psensor_col += 1;
+				psensor_row = 0;
 			}
 			else{
-				psensor_direction = 1;
+				psensor_row ++;
 			}
         adc_is_ready = true;
     }
@@ -72,13 +73,7 @@ void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
-						ble_gap_phys_t const phys =
-            {
-                .rx_phys = BLE_GAP_PHY_2MBPS,
-                .tx_phys = BLE_GAP_PHY_2MBPS,
-            };
-            err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
-						APP_ERROR_CHECK(err_code);
+						
 						psensor_start();
 						break;
 
@@ -195,7 +190,7 @@ void advertising_init(void)
     // Set advertising parameters.
     memset(&adv_params, 0, sizeof(adv_params));
 
-    adv_params.primary_phy     = BLE_GAP_PHY_1MBPS;
+    adv_params.primary_phy     = BLE_GAP_PHY_AUTO;
 		adv_params.secondary_phy   = BLE_GAP_PHY_2MBPS;
     adv_params.duration        = APP_ADV_DURATION;
     adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
@@ -355,5 +350,6 @@ void ble_stack_init(void)
 
     // Register a handler for BLE events.
     NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
+	
 }
 

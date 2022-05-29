@@ -2,18 +2,23 @@
 #include "app_timer.h"
 
 #define SAADC_CHANNEL_COUNT   4
-#define SAADC_SAMPLE_INTERVAL_MS 100
+#define SAADC_SAMPLE_INTERVAL_MS 3
 
-#define ROW0 13
 #define ROW1 8
 #define ROW2 4
 #define ROW3 7
 #define ROW4 12
-#define ROW_LIST {ROW0,ROW1,ROW2,ROW3,ROW4}
+#define ROW_LIST {ROW3,ROW4,ROW2,ROW1}
+
+#define COL1 24
+#define COL2 13
+#define COL3 20
+#define COL4 17
+#define COL_LIST {COL1,COL2,COL3,COL4}
 
 extern volatile bool adc_is_ready;
-extern volatile uint8_t psensor_direction;
-extern volatile uint8_t psensor_pointer;
+extern volatile uint8_t psensor_row;
+extern volatile uint8_t psensor_col;
 extern uint8_t voltage_buffer[8];
 
 static nrf_saadc_value_t samples[SAADC_CHANNEL_COUNT];
